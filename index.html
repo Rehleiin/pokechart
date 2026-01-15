@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <title>Pokemon weaknesses and strengths</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111824;
+      --panel2:#0f1621;
+      --text:#e7eef8;
+      --muted:#9fb2c8;
+      --grid:#223043;
+
+      --rowHL: rgba(0, 170, 255, 0.14);
+      --colHL: rgba(255, 170, 0, 0.12);
+      --cellHL: rgba(255, 60, 60, 0.28);
+
+      --chip:#1a2636;
+      --chipBorder:#2a3a52;
+      --chipActive:#2a4b70;
+
+      --textDark:#0b0f14;
+      --textLight:#f2f6ff;
+
+      --type-normal:#d6d6d6;
+      --type-fire:#e24b4b;
+      --type-water:#4e7dff;
+      --type-electric:#f4d63b;
+      --type-grass:#4bc166;
+      --type-ice:#8fd9ff;
+      --type-fighting:#b3533a;
+      --type-poison:#8c4bd9;
+      --type-ground:#caa24a;
+      --type-flying:#7d8eea;
+      --type-psychic:#f25b9e;
+      --type-bug:#9fc83a;
+      --type-rock:#b7a38a;
+      --type-ghost:#4b4bb5;
+      --type-dragon:#6a4be6;
+      --type-dark:#3a2f2a;
+      --type-steel:#7d8a96;
+      --type-fairy:#f2a7c9;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: "Roboto Condensed","Arial Narrow","Helvetica Neue Condensed","Helvetica Neue",Arial,ui-sans-serif,system-ui;
+      background: radial-gradient(1000px 600px at 20% 0%, #142034 0%, var(--bg) 60%);
+      color:var(--text);
+      touch-action: manipulation;
+    }
+
+    header{
+      padding:12px 16px 6px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1{
+      margin:0 0 6px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .bar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    button{
+      background: linear-gradient(180deg, #1b2a3e, #142033);
+      color: var(--text);
+      border: 1px solid #2a3a52;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    button:hover{ filter: brightness(1.08); }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid #2a3a52;
+      background: rgba(17,24,36,.55);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill strong{ color: var(--text); font-weight: 700; }
+
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px 22px;
+    }
+
+    .chartShell{
+      border: 1px solid #223043;
+      background: linear-gradient(180deg, rgba(17,24,36,.85), rgba(11,15,20,.85));
+      border-radius: 14px;
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .chartShell{
+      width: min(98vw, 920px);
+      margin: 0 auto;
+    }
+
+    /* Table-like grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 120px repeat(18, minmax(38px, 1fr));
+      overflow: visible;
+      font-size: clamp(8px, 0.9vw, 10px);
+    }
+
+    .cell{
+      padding: 4px 3px;
+      border-right: 1px solid var(--grid);
+      border-bottom: 1px solid var(--grid);
+      text-align:center;
+      font-size: 1em;
+      line-height: 1;
+      user-select:none;
+      position: relative;
+      background: rgba(15,22,33,.55);
+      min-height: 2.8em;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      cursor: pointer;
+    }
+
+    /* Sticky headers */
+    .corner{
+      position: sticky;
+      top:0;
+      left:0;
+      z-index: 5;
+      background: linear-gradient(180deg, #132033, #0e1726);
+      font-weight: 800;
+      color: var(--text);
+      justify-content: center;
+      padding: 0;
+      overflow: hidden;
+    }
+    .corner::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        linear-gradient(45deg, transparent 49.2%, rgba(255,255,255,.25) 50%, transparent 50.8%);
+      pointer-events:none;
+    }
+    .cornerLabel{
+      position:absolute;
+      font-size: 11px;
+      letter-spacing: .3px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .cornerLabel.def{
+      top: 6px;
+      right: 8px;
+    }
+    .cornerLabel.atk{
+      bottom: 6px;
+      left: 8px;
+    }
+    .colHead{
+      position: sticky;
+      top:0;
+      z-index: 4;
+      background: linear-gradient(180deg, #132033, #0e1726);
+      font-weight: 800;
+      cursor:pointer;
+    }
+    .colHead .abbr{
+      padding: 6px 6px;
+      line-height: 1.1;
+    }
+    .colHead .abbr{
+      padding: 6px 6px;
+      line-height: 1.1;
+    }
+    .rowHead{
+      position: sticky;
+      left:0;
+      z-index: 3;
+      background: linear-gradient(180deg, #101b2b, #0c1420);
+      justify-content: flex-start;
+      padding-left: 10px;
+      cursor:pointer;
+      font-weight: 800;
+    }
+
+    .typeChip{
+      width: 100%;
+      display:flex;
+      align-items:center;
+      justify-content: flex-start;
+      gap:10px;
+    }
+    .abbr{
+      font-weight: 900;
+      letter-spacing: .5px;
+      font-size: 11px;
+      padding: 5px 7px;
+      border-radius: 10px;
+      border: 1px solid var(--chipBorder);
+      background: var(--chip);
+      min-width: 0;
+      text-align:center;
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+    .rowHead .abbr{
+      width: 9ch;
+      justify-content: center;
+    }
+
+    /* Highlight states */
+    .rowActive{ background: var(--rowHL) !important; }
+    .colActive{ background: var(--colHL) !important; }
+    .cellActive{ background: var(--cellHL) !important; outline: 2px solid rgba(255,80,80,.35); outline-offset: -2px; }
+    .cellActive.m2{ outline-color: rgba(90,255,140,.7); }
+    .cellActive.m1{ outline-color: rgba(220,235,255,.55); }
+    .cellActive.m05{ outline-color: rgba(255,208,138,.75); }
+    .cellActive.m0{ outline-color: rgba(180,200,230,.6); }
+
+    .headActive{
+      background: linear-gradient(180deg, #1c3555, #142a45) !important;
+    }
+
+    /* Value styling */
+    .m0{ color:#c3d1e6; opacity:.85; font-size: 1.4em; }
+    .m05{ color:#ffd08a; font-size: 1.4em; }
+    .m1{ color:#e7eef8; opacity:.92; font-size: 1.4em; }
+    .m2{ color:#8dffb0; font-weight: 900; font-size: 1.4em; }
+
+    .cell small{
+      color: var(--muted);
+      font-size: 11px;
+      opacity:.9;
+    }
+
+    /* Tooltip */
+    .cell[data-tip]:hover::after{
+      content: attr(data-tip);
+      position:absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--text);
+      z-index: 10;
+      text-align:center;
+      pointer-events:none;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      min-width: 180px;
+      max-width: 260px;
+      white-space: normal;
+      line-height: 1.3;
+    }
+    .cell[data-tip]:hover{
+      z-index: 6;
+    }
+    .cell[data-tip].tip-left:hover::after{
+      left: 6px;
+      transform: none;
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 10px auto 0;
+      padding: 0 16px 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 110px repeat(18, minmax(34px, 1fr)); }
+      .chartShell{ width: min(99vw, 820px); }
+    }
+
+    @media (max-width: 720px){
+      header{ padding: 12px 14px 6px; }
+      h1{ font-size: 15px; }
+      .bar{ gap: 8px; }
+      button{ padding: 10px 12px; font-size: 14px; }
+      .pill{ font-size: 12px; }
+      .grid{ min-width: 880px; }
+      .cell{ min-height: 3.2em; }
+    }
+
+    .type-normal .abbr{ background: var(--type-normal); color: var(--textDark); border-color: #bdbdbd; }
+    .type-fire .abbr{ background: var(--type-fire); color: var(--textLight); border-color: #c13d3d; }
+    .type-water .abbr{ background: var(--type-water); color: var(--textLight); border-color: #4369db; }
+    .type-electric .abbr{ background: var(--type-electric); color: var(--textDark); border-color: #d8bb34; }
+    .type-grass .abbr{ background: var(--type-grass); color: var(--textDark); border-color: #3ca553; }
+    .type-ice .abbr{ background: var(--type-ice); color: var(--textDark); border-color: #78c3e8; }
+    .type-fighting .abbr{ background: var(--type-fighting); color: var(--textLight); border-color: #954330; }
+    .type-poison .abbr{ background: var(--type-poison); color: var(--textLight); border-color: #6e35b0; }
+    .type-ground .abbr{ background: var(--type-ground); color: var(--textDark); border-color: #b18c3f; }
+    .type-flying .abbr{ background: var(--type-flying); color: var(--textLight); border-color: #6a79d6; }
+    .type-psychic .abbr{ background: var(--type-psychic); color: var(--textLight); border-color: #d34d88; }
+    .type-bug .abbr{ background: var(--type-bug); color: var(--textDark); border-color: #86ae2f; }
+    .type-rock .abbr{ background: var(--type-rock); color: var(--textDark); border-color: #9f8e77; }
+    .type-ghost .abbr{ background: var(--type-ghost); color: var(--textLight); border-color: #3b3b93; }
+    .type-dragon .abbr{ background: var(--type-dragon); color: var(--textLight); border-color: #583acc; }
+    .type-dark .abbr{ background: var(--type-dark); color: var(--textLight); border-color: #2b231f; }
+    .type-steel .abbr{ background: var(--type-steel); color: var(--textDark); border-color: #66727d; }
+    .type-fairy .abbr{ background: var(--type-fairy); color: var(--textDark); border-color: #d98db1; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Pokemon weaknesses and strengths</h1>
+  <p class="sub">
+    Click an <b>attacker type</b> on the left (row). Click a <b>defender type</b> on top (column).
+    Intersections are highlighted.
+  </p>
+  <div class="bar">
+    <button id="resetBtn" type="button">Reset</button>
+    <span class="pill">Attacker: <strong id="selAtk">–</strong></span>
+    <span class="pill">Defender: <strong id="selDef">–</strong></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="chartShell">
+    <div id="grid" class="grid" aria-label="Type Chart"></div>
+  </div>
+</div>
+
+<footer>
+  Multipliers follow the standard type chart (Gen 6+).
+</footer>
+
+<script>
+  const TYPES = [
+    "NORMAL","FIRE","WATER","ELECTRIC","GRASS","ICE","FIGHTING","POISON","GROUND",
+    "FLYING","PSYCHIC","BUG","ROCK","GHOST","DRAGON","DARK","STEEL","FAIRY"
+  ];
+
+  const ABBR = {
+    NORMAL:"NOR", FIRE:"FIR", WATER:"WAT", ELECTRIC:"ELE", GRASS:"GRA", ICE:"ICE",
+    FIGHTING:"FIG", POISON:"POI", GROUND:"GRO", FLYING:"FLY", PSYCHIC:"PSY", BUG:"BUG",
+    ROCK:"ROC", GHOST:"GHO", DRAGON:"DRA", DARK:"DAR", STEEL:"STE", FAIRY:"FAI"
+  };
+
+  // Attack -> Defense multipliers (only overrides; everything else = 1)
+  const RULES = {
+    NORMAL:  { ROCK:0.5, GHOST:0, STEEL:0.5 },
+    FIRE:    { FIRE:0.5, WATER:0.5, GRASS:2, ICE:2, BUG:2, ROCK:0.5, DRAGON:0.5, STEEL:2 },
+    WATER:   { FIRE:2, WATER:0.5, GRASS:0.5, GROUND:2, ROCK:2, DRAGON:0.5 },
+    ELECTRIC:{ WATER:2, ELECTRIC:0.5, GRASS:0.5, GROUND:0, FLYING:2, DRAGON:0.5 },
+    GRASS:   { FIRE:0.5, WATER:2, GRASS:0.5, POISON:0.5, GROUND:2, FLYING:0.5, BUG:0.5, ROCK:2, DRAGON:0.5, STEEL:0.5 },
+    ICE:     { FIRE:0.5, WATER:0.5, GRASS:2, ICE:0.5, GROUND:2, FLYING:2, DRAGON:2, STEEL:0.5 },
+    FIGHTING:{ NORMAL:2, ICE:2, ROCK:2, DARK:2, STEEL:2, POISON:0.5, FLYING:0.5, PSYCHIC:0.5, BUG:0.5, FAIRY:0.5, GHOST:0 },
+    POISON:  { GRASS:2, FAIRY:2, POISON:0.5, GROUND:0.5, ROCK:0.5, GHOST:0.5, STEEL:0 },
+    GROUND:  { FIRE:2, ELECTRIC:2, GRASS:0.5, POISON:2, FLYING:0, BUG:0.5, ROCK:2, STEEL:2 },
+    FLYING:  { ELECTRIC:0.5, GRASS:2, FIGHTING:2, BUG:2, ROCK:0.5, STEEL:0.5 },
+    PSYCHIC: { FIGHTING:2, POISON:2, PSYCHIC:0.5, STEEL:0.5, DARK:0 },
+    BUG:     { FIRE:0.5, GRASS:2, FIGHTING:0.5, POISON:0.5, FLYING:0.5, PSYCHIC:2, GHOST:0.5, DARK:2, STEEL:0.5, FAIRY:0.5 },
+    ROCK:    { FIRE:2, ICE:2, FIGHTING:0.5, GROUND:0.5, FLYING:2, BUG:2, STEEL:0.5 },
+    GHOST:   { NORMAL:0, PSYCHIC:2, GHOST:2, DARK:0.5 },
+    DRAGON:  { DRAGON:2, STEEL:0.5, FAIRY:0 },
+    DARK:    { FIGHTING:0.5, PSYCHIC:2, GHOST:2, DARK:0.5, FAIRY:0.5 },
+    STEEL:   { FIRE:0.5, WATER:0.5, ELECTRIC:0.5, ICE:2, ROCK:2, STEEL:0.5, FAIRY:2 },
+    FAIRY:   { FIRE:0.5, FIGHTING:2, POISON:0.5, DRAGON:2, DARK:2, STEEL:0.5 }
+  };
+
+  function mult(atk, def){
+    const r = RULES[atk] || {};
+    return (def in r) ? r[def] : 1;
+  }
+
+  function multLabel(m){
+    if(m === 0) return "no effect";
+    if(m === 0.5) return "not very effective";
+    if(m === 2) return "super-effective";
+    return "normal effectiveness";
+  }
+
+  function multText(m){
+    if(m === 0.5) return "0,5×";
+    if(m === 0) return "0×";
+    if(m === 2) return "2×";
+    return "";
+  }
+
+  const selectedAtk = new Set();
+  const selectedDef = new Set();
+
+  const grid = document.getElementById("grid");
+  const selAtkEl = document.getElementById("selAtk");
+  const selDefEl = document.getElementById("selDef");
+  const resetBtn = document.getElementById("resetBtn");
+
+  function fmtType(t){ return t[0] + t.slice(1).toLowerCase(); }
+  function fmtLower(t){ return t.toLowerCase(); }
+  function toggleSet(set, value){
+    if(set.has(value)) set.delete(value);
+    else set.add(value);
+  }
+  function formatSelection(set){
+    if(set.size === 0) return "–";
+    return Array.from(set).map(fmtType).join(", ");
+  }
+
+  function render(){
+    grid.innerHTML = "";
+
+    // Corner
+    const corner = document.createElement("div");
+    corner.className = "cell corner";
+    corner.innerHTML = `
+      <span class="cornerLabel def">Defender</span>
+      <span class="cornerLabel atk">Attacker</span>
+    `;
+    grid.appendChild(corner);
+
+    // Column headers (defense)
+    TYPES.forEach(def => {
+    const h = document.createElement("div");
+    h.className = `cell colHead type-${def.toLowerCase()}`;
+    h.dataset.def = def;
+    h.innerHTML = `<div class="abbr">${ABBR[def]}</div>`;
+    h.addEventListener("click", () => {
+        toggleSet(selectedDef, def);
+        updateHighlights();
+    });
+    grid.appendChild(h);
+    });
+
+    // Rows
+    TYPES.forEach(atk => {
+      // Row header
+    const rh = document.createElement("div");
+    rh.className = `cell rowHead type-${atk.toLowerCase()}`;
+    rh.dataset.atk = atk;
+    rh.innerHTML = `
+      <div class="typeChip">
+        <span class="abbr">${fmtType(atk)}</span>
+      </div>
+    `;
+    rh.addEventListener("click", () => {
+        toggleSet(selectedAtk, atk);
+        updateHighlights();
+    });
+    grid.appendChild(rh);
+
+      // Data cells
+      TYPES.forEach((def, idx) => {
+        const m = mult(atk, def);
+        const td = document.createElement("div");
+        td.className = "cell";
+        td.dataset.atk = atk;
+        td.dataset.def = def;
+        td.dataset.tip = `${fmtLower(atk)} ⭢ ${fmtLower(def)} = ${multLabel(m)}`;
+        if(idx < 2) td.classList.add("tip-left");
+
+        const cls = (m === 0) ? "m0" : (m === 0.5) ? "m05" : (m === 2) ? "m2" : "m1";
+        td.classList.add(cls);
+        const val = multText(m);
+        td.innerHTML = val ? `<span class="${cls}">${val}</span>` : "";
+
+        td.addEventListener("click", () => {
+          if(selectedAtk.has(atk) && selectedDef.has(def)){
+            selectedAtk.delete(atk);
+            selectedDef.delete(def);
+          }else{
+            selectedAtk.add(atk);
+            selectedDef.add(def);
+          }
+          updateHighlights();
+        });
+
+        grid.appendChild(td);
+      });
+    });
+
+    updateHighlights();
+  }
+
+  function updateHighlights(){
+    selAtkEl.textContent = formatSelection(selectedAtk);
+    selDefEl.textContent = formatSelection(selectedDef);
+
+    // Clear all
+    grid.querySelectorAll(".rowActive,.colActive,.cellActive,.headActive").forEach(el=>{
+      el.classList.remove("rowActive","colActive","cellActive","headActive");
+    });
+
+    // Row highlight
+    selectedAtk.forEach(atk => {
+      grid.querySelectorAll(`[data-atk="${atk}"]`).forEach(el => {
+        if(el.classList.contains("rowHead")) el.classList.add("headActive");
+        else el.classList.add("rowActive");
+      });
+    });
+
+    selectedDef.forEach(def => {
+      const colHead = grid.querySelector(`.colHead[data-def="${def}"]`);
+      if(colHead) colHead.classList.add("headActive");
+      grid.querySelectorAll(`.cell[data-def="${def}"]`).forEach(el => {
+        if(!el.classList.contains("colHead")) el.classList.add("colActive");
+      });
+    });
+
+    selectedAtk.forEach(atk => {
+      selectedDef.forEach(def => {
+        const cell = grid.querySelector(`.cell[data-atk="${atk}"][data-def="${def}"]`);
+        if(cell) cell.classList.add("cellActive");
+      });
+    });
+  }
+
+  resetBtn.addEventListener("click", () => {
+    selectedAtk.clear();
+    selectedDef.clear();
+    updateHighlights();
+  });
+
+  render();
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
