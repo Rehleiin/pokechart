@@ -178,6 +178,7 @@
       color: var(--muted);
       font-weight: 800;
     }
+    .labelShort{ display:none; }
     .cornerLabel.def{
       top: 6px;
       right: 8px;
@@ -327,6 +328,10 @@
       .rowHead .abbrShort{ display:inline-flex; }
       .colHead .abbr{ padding: 4px 4px; font-size: 9px; }
       .rowHead .abbr{ padding: 4px 5px; font-size: 10px; }
+      .labelFull{ display:none; }
+      .labelShort{ display:inline; }
+      .valFull{ display:none; }
+      .valShort{ display:inline; }
     }
 
     @media (hover: none) and (pointer: coarse){
@@ -423,11 +428,11 @@
     return "normal effectiveness";
   }
 
-  function multText(m){
-    if(m === 0.5) return "0,5×";
-    if(m === 0) return "0×";
-    if(m === 2) return "2×";
-    return "";
+  function multTextPair(m){
+    if(m === 0.5) return { full: "0,5×", short: "0,5" };
+    if(m === 0) return { full: "0×", short: "0" };
+    if(m === 2) return { full: "2×", short: "2" };
+    return null;
   }
 
   const selectedAtk = new Set();
@@ -456,8 +461,8 @@
     const corner = document.createElement("div");
     corner.className = "cell corner";
     corner.innerHTML = `
-      <span class="cornerLabel def">Defender</span>
-      <span class="cornerLabel atk">Attacker</span>
+      <span class="cornerLabel def"><span class="labelFull">Defender</span><span class="labelShort">DEF</span></span>
+      <span class="cornerLabel atk"><span class="labelFull">Attacker</span><span class="labelShort">ATK</span></span>
     `;
     grid.appendChild(corner);
 
@@ -504,8 +509,10 @@
 
         const cls = (m === 0) ? "m0" : (m === 0.5) ? "m05" : (m === 2) ? "m2" : "m1";
         td.classList.add(cls);
-        const val = multText(m);
-        td.innerHTML = val ? `<span class="${cls}">${val}</span>` : "";
+        const val = multTextPair(m);
+        td.innerHTML = val
+          ? `<span class="${cls} valFull">${val.full}</span><span class="${cls} valShort">${val.short}</span>`
+          : "";
 
         td.addEventListener("click", () => {
           if(selectedAtk.has(atk) && selectedDef.has(def)){
