@@ -239,6 +239,8 @@
       width: 9ch;
       justify-content: center;
     }
+    .rowHead .abbrShort{ display:none; }
+    .rowHead .abbrFull{ display:inline-flex; }
 
     /* Highlight states */
     .rowActive{ background: var(--rowHL) !important; }
@@ -314,8 +316,17 @@
       .bar{ gap: 8px; }
       button{ padding: 10px 12px; font-size: 14px; }
       .pill{ font-size: 12px; }
-      .grid{ min-width: 880px; }
-      .cell{ min-height: 3.2em; }
+      .grid{
+        grid-template-columns: 72px repeat(18, minmax(22px, 1fr));
+        min-width: 680px;
+        font-size: 8px;
+      }
+      .cell{ min-height: 2.4em; }
+      .rowHead{ padding-left: 6px; }
+      .rowHead .abbrFull{ display:none; }
+      .rowHead .abbrShort{ display:inline-flex; }
+      .colHead .abbr{ padding: 4px 4px; font-size: 9px; }
+      .rowHead .abbr{ padding: 4px 5px; font-size: 10px; }
     }
 
     .type-normal .abbr{ background: var(--type-normal); color: var(--textDark); border-color: #bdbdbd; }
@@ -467,7 +478,8 @@
     rh.dataset.atk = atk;
     rh.innerHTML = `
       <div class="typeChip">
-        <span class="abbr">${fmtType(atk)}</span>
+        <span class="abbr abbrFull">${fmtType(atk)}</span>
+        <span class="abbr abbrShort">${ABBR[atk]}</span>
       </div>
     `;
     rh.addEventListener("click", () => {
